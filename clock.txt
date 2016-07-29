@@ -1,1 +1,221 @@
+E 1005
+20 20 30 30
 
+a 0150
+MOV AX,0600 ;This procedure clears the screen
+MOV BH,07
+MOV CX,0000
+MOV DX,184F
+INT 10
+RET
+
+a 0180
+MOV AH,02 ;This procedure puts the cursor at location 0,0
+MOV BH,00
+MOV DX,0000
+INT 10
+RET
+
+a 0200
+db “HR MIN SEC$”
+
+a 0250
+MOV si,1000 ;Location to start saving input
+MOV CX,0005 ;Get first 5 characters
+MOV AH,01 ;Let it know to get input
+INT 21 ;Get input 
+MOV [si],al ;save to memory
+INC SI ;increment to next memory location
+LOOP 0256 
+RET 
+
+a 400
+Push cx ;This procedure causes a 1sec delay
+PUSH AX
+MOV CX,FFFF
+MOV AX,5555
+DEC AX
+CMP AX,0000
+JNZ 408
+LOOP 405
+POP AX
+POP CX
+RET
+
+a 450
+PUSH AX ;moves cursor to LSB of seconds
+PUSH BX
+PUSH DX
+MOV AH,02
+MOV BH,00
+MOV DX,0108
+INT 10
+POP DX
+POP BX
+POP AX
+RET
+
+a 500
+PUSH AX ;Moves cursor to MSB of seconds
+PUSH BX
+PUSH DX
+MOV AH,02
+MOV BH,00
+MOV DX,0107
+INT 10
+POP DX
+POP BX
+POP AX
+RET
+
+a 550
+PUSH AX ;Moves cursor to LSB of minutes
+PUSH BX
+PUSH DX
+MOV AH,02
+MOV BH,00
+MOV DX,0104
+INT 10
+POP DX
+POP BX
+POP AX
+RET
+
+a 600
+PUSH AX ;Moves cursor to MSB of minutes
+PUSH BX
+PUSH DX
+MOV AH,02
+MOV BH,00
+MOV DX,0103
+INT 10
+POP DX
+POP BX
+POP AX
+RET
+
+a 650
+PUSH AX ;Moves cursor to LSB of hours
+PUSH BX
+PUSH DX
+MOV AH,02
+MOV BH,00
+MOV DX,0101
+INT 10
+POP DX
+POP BX
+POP AX
+RET
+
+a 700
+PUSH AX ;Moves cursor to MSB hours
+PUSH BX
+PUSH DX
+MOV AH,02
+MOV BH,00
+MOV DX,0100
+INT 10
+POP DX
+POP BX
+POP AX
+RET
+
+a 0300
+CALL 0150 ;Call clear screen
+CALL 0180 ;Put cursor in top left
+MOV AH,09 ;Display string
+MOV DX,0200
+INT 21 ;Displays the screen
+MOV AH,02 ;Display character
+MOV BH,00
+MOV DX,0100 ;Mov cursor to next line
+INT 10
+CALL 0250 ;Call input procedure
+MOV AH,02 ;Let it know to display character
+MOV BH,00
+MOV DX,0105 ;Move cursor to next line
+INT 10
+mov dl,20 ;display space
+INT 21
+mov dl,20 ;display space
+INT 21
+mov dl,30 ;display 0
+INT 21 ;
+mov dl,30 ;display 0
+INT 21
+MOV CX,ffff ;Make the clock run a long time
+CALL 0400 ;Delays 1 sec
+CALL 0450 ;Place curson to LSB seconds
+mov si,1008 ;Get value of LSB seconds
+mov dl,[si]
+cmp byte [si],3A ; Cmp LSB after 9 value
+je 034C ;jmp ;jump if the value was above 9
+inc byte [si] ;else increment LSB second
+INT 21 ;display lsb second
+LOOP 0335 ; Keep running main loop
+RET
+mov si,1007 ;set to MSB of second
+inc byte [si] ;inc MSB of seconds
+cmp byte [si],36 
+je 036C ;jump if MSB of seconds is 6
+CALL 0500 ;Place cursor on MSB of seconds
+mov dl,[si]
+int 21 ;Display MSB of seconds
+mov si,1008 
+CALL 0450 ;place cursor on LSB of seconds
+mov byte [si],30 ;set to 0
+mov dl,[si]
+int 21 ;display 0
+jmp 0349 ;Jump back to main loop
+mov si,1004 ;lsb of minutes
+inc byte [si] ;increment lsb of minutes
+cmp byte [si],3A
+je 0385 ;jump if lsb of hours is above 9
+CALL 0550 ;set cursor on lsb of minutes
+mov dl,[si]
+int 21 ;display lsb of hours
+mov si,1007 ;set MSB of seconds
+mov byte [si],30 ;set to 0
+jmp 0356 ;jump back to display LSB of seconds
+mov si,1003 ;MSB minutes
+inc byte [si] ;increment MSB minutes
+cmp byte [si],36
+je 039E ;incremement LSB of hours
+CALL 0600 ;Place cursor on MSB of minutes
+mov dl,[si]
+int 21 ;display MSB of minutes
+mov si,1004 ; lsb of minutes
+mov byte [si],30 ;set to 0
+jmp 0376 ;Jump back to display msb of minutes
+mov si,1001 ;LSB of hours
+inc byte [si] ;increment lsb hours
+cmp byte [si],3A ;compare lsb to above 9
+je 03BC ;increment MSB of hours
+cmp byte [si],34 ;see if LSB of hours is 4
+je 03D0 ; check to see MSB of hours
+CALL 0650 ;place cursor to lsb of hours
+mov dl,[si]
+int 21 ;display lsb of hours
+mov si,1003 ;msb of minutes
+mov byte [si],30 ;set to 0
+jmp 038F ;jump back the previous digit
+mov si,1000 ;MSB hours
+inc byte [si] ;increment Msb hours
+CALL 0700 ;cursor on MSB hours
+mov dl,[si]
+int 21 ;display MSB hours
+mov si,1001 ;LSB hours
+mov byte [si],30 ;set to 0
+jmp 03A8 ;jump back to previsou digits
+cmp byte [si-1],32 ;cmp MSB of hours to 2
+jne 03AD ;jump back if not 2
+mov si,1000 ;MSB hours
+mov byte [si],30 ;set to 0
+CALL 0700 ;cursor on MSB hours
+mov dl,[si]
+int 21 ;display MSB hours
+mov si,1001 ;LSB hours
+mov byte [si],30 ;set to 0
+jmp03AD ;jump back to display LSB hours
+
+g=300
