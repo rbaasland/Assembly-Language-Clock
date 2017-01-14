@@ -1,4 +1,4 @@
-# Assembly-Language-Clock
+# Assembly Language Clock
 24 Hour clock built for 8086
 
 ## Introduction:
